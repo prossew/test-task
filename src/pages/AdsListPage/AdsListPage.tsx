@@ -184,7 +184,7 @@ export default function AdsListPage() {
                   { value: "title_asc", label: "По названию (А-Я)" },
                   { value: "title_desc", label: "По названию (Я-А)" },
                 ]}
-                w={248}
+                w={246}
                 styles={{
                   input: {
                     backgroundColor: "#ffffff",
@@ -222,7 +222,8 @@ export default function AdsListPage() {
                   </Text>
                   <IconChevronUp size={16} color="gray" />
                 </Group>
-                <Stack gap="xs" mb="md">
+
+                <Stack gap="xs" mb="md" mt="xs">
                   {CATEGORIES.map((cat) => (
                     <Checkbox
                       key={cat.value}
@@ -237,12 +238,10 @@ export default function AdsListPage() {
                     borderBottom: "1px solid #F0F0F0",
                     width: 224,
                     my: 8,
+                    margin: 10,
                   }}
-                  mb="md"
                 />
-
-                {/* Переключатель — текст слева, toggle справа */}
-                <Group justify="space-between" mb="xl">
+                <Group justify="space-between">
                   <Text size="sm" fw={600} style={{ maxWidth: 160 }}>
                     Только требующие доработок
                   </Text>
@@ -252,13 +251,14 @@ export default function AdsListPage() {
                       setNeedsRevision(e.currentTarget.checked);
                       setPage(1);
                     }}
+                    withThumbIndicator={false}
                   />
                 </Group>
               </Box>
 
               <Button
                 variant="subtle"
-                color="#848388    "
+                color="#848388"
                 size="sm"
                 fullWidth
                 bg="white"
@@ -297,11 +297,14 @@ export default function AdsListPage() {
             )}
 
             {totalPages > 1 && (
-              <Group justify="center" mt="xl">
+              <Group mt="xl">
                 <Pagination
                   value={page}
                   onChange={setPage}
                   total={totalPages}
+                  classNames={{
+                    control: "pagination-control",
+                  }}
                 />
               </Group>
             )}

@@ -13,3 +13,10 @@ a {
   text-decoration: none;
   color: inherit;
 }
+
+
+.pagination-control[data-active] {
+  color: #1890FF;
+  border-color: #1890FF;
+  background: transparent;
+}
