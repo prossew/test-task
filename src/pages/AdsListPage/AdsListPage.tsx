@@ -41,6 +41,7 @@ export default function AdsListPage() {
   const [page, setPage] = useState(1);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [needsRevision, setNeedsRevision] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(true);
   const [sortColumn, setSortColumn] = useState<"createdAt" | "title">(
     "createdAt",
   );
@@ -210,29 +211,40 @@ export default function AdsListPage() {
                 style={{
                   border: "1px solid #e9ecef",
                   borderRadius: 8,
-                  minHeight: 247,
                 }}
               >
                 <Text fw={600} mb="sm" size="md">
                   Фильтры
                 </Text>
-                <Group w="100%" gap="sm" justify="space-between">
+                <Group
+                  w="100%"
+                  gap="sm"
+                  justify="space-between"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setCategoriesOpen(!categoriesOpen)}
+                >
                   <Text size="sm" fw={500}>
                     Категория
                   </Text>
-                  <IconChevronUp size={16} color="gray" />
+                  {categoriesOpen ? (
+                    <IconChevronUp size={16} color="gray" />
+                  ) : (
+                    <IconChevronDown size={16} color="gray" />
+                  )}
                 </Group>
 
-                <Stack gap="xs" mb="md" mt="xs">
-                  {CATEGORIES.map((cat) => (
-                    <Checkbox
-                      key={cat.value}
-                      label={cat.label}
-                      checked={selectedCategories.includes(cat.value)}
-                      onChange={() => handleCategoryToggle(cat.value)}
-                    />
-                  ))}
-                </Stack>
+                {categoriesOpen && (
+                  <Stack gap="xs" mt="xs">
+                    {CATEGORIES.map((cat) => (
+                      <Checkbox
+                        key={cat.value}
+                        label={cat.label}
+                        checked={selectedCategories.includes(cat.value)}
+                        onChange={() => handleCategoryToggle(cat.value)}
+                      />
+                    ))}
+                  </Stack>
+                )}
                 <Box
                   style={{
                     borderBottom: "1px solid #F0F0F0",
@@ -291,7 +303,7 @@ export default function AdsListPage() {
             {!isLoading && !isError && (
               <SimpleGrid cols={viewMode === "grid" ? 5 : 1} spacing="md">
                 {data?.items.map((item) => (
-                  <AdCard key={item.id} item={item} />
+                  <AdCard key={item.id} item={item} viewMode={viewMode} />
                 ))}
               </SimpleGrid>
             )}

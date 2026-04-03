@@ -10,15 +10,23 @@ export type GetItemsParams = {
   sortDirection?: "asc" | "desc";
 };
 
-export type ItemsGetOut = {
-  items: Item[];
-  total: number;
-};
-
 export type ItemUpdateIn = {
   category: Category;
   title: string;
   description?: string;
   price: number;
   params: Item["params"];
+};
+
+export type ItemListItem = {
+  id: number;
+  category: Category;
+  title: string;
+  price: number;
+  needsRevision: boolean;
+};
+
+export type ItemsGetOut = {
+  items: ItemListItem[];
+  total: number;
 };
