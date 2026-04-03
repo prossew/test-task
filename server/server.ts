@@ -20,8 +20,18 @@ fastify.use((_, __, next) =>
 );
 
 // Настройка CORS
-fastify.use((_, reply, next) => {
+fastify.use((req, reply, next) => {
   reply.setHeader("Access-Control-Allow-Origin", "*");
+  reply.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, PUT, POST, DELETE, OPTIONS",
+  );
+  reply.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") {
+    reply.statusCode = 204;
+    reply.end();
+    return;
+  }
   next();
 });
 
