@@ -18,6 +18,7 @@ import { getItemById, updateItem } from "../../api/itemsApi";
 import ClearableInput from "../../components/ClearableInput/ClearableInput";
 import { IconChevronDown } from "@tabler/icons-react";
 import type { Category } from "../../types/item";
+import { improveDescription, getMarketPrice } from "../../api/llmApi";
 
 const CATEGORY_OPTIONS = [
   { value: "auto", label: "Авто" },
@@ -42,6 +43,14 @@ export default function AdEditPage() {
   const [description, setDescription] = useState("");
   const [params, setParams] = useState<Record<string, string>>({});
   const [initialized, setInitialized] = useState(false);
+  const [isImprovingDescription, setIsImprovingDescription] = useState(false);
+  const [isGettingPrice, setIsGettingPrice] = useState(false);
+  const [descriptionSuggestion, setDescriptionSuggestion] = useState<
+    string | null
+  >(null);
+  const [priceSuggestion, setPriceSuggestion] = useState<string | null>(null);
+  const [descriptionError, setDescriptionError] = useState(false);
+  const [priceError, setPriceError] = useState(false);
 
   useEffect(() => {
     if (item) {
@@ -53,7 +62,6 @@ export default function AdEditPage() {
       Object.entries(item.params).forEach(([k, v]) => {
         if (v !== undefined && v !== null) p[k] = String(v);
       });
-
       const draft = localStorage.getItem(`draft_${id}`);
       if (draft) {
         const parsed = JSON.parse(draft);
@@ -64,7 +72,6 @@ export default function AdEditPage() {
       } else {
         setParams(p);
       }
-
       setInitialized(true);
     }
   }, [item, id]);
@@ -107,9 +114,47 @@ export default function AdEditPage() {
 
   const isValid =
     title.trim() !== "" && price.trim() !== "" && Number(price) > 0;
-
-  const updateParam = (key: string, value: string) => {
+  const updateParam = (key: string, value: string) =>
     setParams((prev) => ({ ...prev, [key]: value }));
+
+  const handleImproveDescription = async () => {
+    setIsImprovingDescription(true);
+    setDescriptionError(false);
+    setDescriptionSuggestion(null);
+    try {
+      const result = await improveDescription({
+        title,
+        category,
+        description,
+        price,
+        params,
+      });
+      setDescriptionSuggestion(result);
+    } catch {
+      setDescriptionError(true);
+    } finally {
+      setIsImprovingDescription(false);
+    }
+  };
+
+  const handleGetPrice = async () => {
+    setIsGettingPrice(true);
+    setPriceError(false);
+    setPriceSuggestion(null);
+    try {
+      const result = await getMarketPrice({
+        title,
+        category,
+        description,
+        price,
+        params,
+      });
+      setPriceSuggestion(result);
+    } catch {
+      setPriceError(true);
+    } finally {
+      setIsGettingPrice(false);
+    }
   };
 
   if (isLoading)
@@ -122,94 +167,155 @@ export default function AdEditPage() {
   return (
     <Box style={{ minHeight: "100vh" }}>
       <Container size="xl" py="xl">
-        <Box bg="white" p="xl" style={{ borderRadius: 8, maxWidth: 760 }}>
-          <Title order={1} fw={500} mr={10}>
+        <Box bg="white" p="xl" style={{ borderRadius: 8, maxWidth: 1103 }}>
+          <Title order={1} fw={500} mb={18}>
             Редактирование объявления
           </Title>
 
-          <Text fw={500} mb={4} mt={18}>
+          <Text fw={500} mb={4}>
             Категория
           </Text>
-
-          <Select
-            value={category}
-            onChange={(v) => v && setCategory(v as Category)}
-            data={CATEGORY_OPTIONS}
-            mb="md"
-            w={200}
-            rightSection={<IconChevronDown size={16} />}
-          />
+          <Box maw={456}>
+            <Select
+              value={category}
+              onChange={(v) => v && setCategory(v as Category)}
+              data={CATEGORY_OPTIONS}
+              mb="md"
+              rightSection={<IconChevronDown size={16} />}
+            />
+          </Box>
           <Box
-            style={{
-              borderBottom: "1px solid #F0F0F0",
-              width: 700,
-              margin: "0 auto",
-              marginTop: "18",
-            }}
-          ></Box>
+            style={{ borderBottom: "1px solid #F0F0F0", marginBottom: 18 }}
+          />
 
-          <Text fw={500} mb={4} mt={18}>
+          <Text fw={500} mb={4}>
             <Text component="span" c="red" mr={4}>
               *
             </Text>
             Название
           </Text>
-          <ClearableInput
-            value={title}
-            onChange={setTitle}
-            mb="sm"
-            borderColor={!title ? "#FAAD14" : undefined}
-          />
+          <Box maw={456}>
+            <ClearableInput
+              value={title}
+              onChange={setTitle}
+              mb="sm"
+              borderColor={!title ? "#FAAD14" : undefined}
+            />
+          </Box>
           <Box
-            style={{
-              borderBottom: "1px solid #F0F0F0",
-              width: 700,
-              margin: "0 auto",
-              marginTop: "18px",
-            }}
-          ></Box>
+            style={{ borderBottom: "1px solid #F0F0F0", marginBottom: 18 }}
+          />
 
-          <Group align="flex-end" mb="md" mt={18}>
-            <Box style={{ flex: 1 }}>
-              <Text fw={500} mb={4}>
-                <Text component="span" c="red" mr={4}>
-                  *
-                </Text>
-                Цена
-              </Text>
+          <Text fw={500} mb={4}>
+            <Text component="span" c="red" mr={4}>
+              *
+            </Text>
+            Цена
+          </Text>
+          <Group align="flex-start" mb="md">
+            <Box maw={456} style={{ flex: "0 0 456px" }}>
               <ClearableInput
                 value={price}
                 onChange={setPrice}
-                mb="sm"
                 borderColor={!price ? "#FAAD14" : undefined}
               />
             </Box>
-
-            <Button
-              variant="none"
-              color="#FFA940"
-              fw={400}
-              leftSection={"💡"}
-              style={{
-                backgroundColor: "#F9F1E6",
-                borderColor: "#FFA940",
-                color: "#FFA940",
-                marginBottom: "13px",
-              }}
-            >
-              Узнать рыночную цену
-            </Button>
+            <Box ml={24} style={{ position: "relative" }}>
+              {priceSuggestion && (
+                <Box
+                  p="md"
+                  style={{
+                    border: "1px solid #e9ecef",
+                    borderRadius: 8,
+                    backgroundColor: "#fff",
+                    width: 332,
+                    maxWidth: 332,
+                    position: "absolute",
+                    bottom: "100%",
+                    left: 0,
+                    zIndex: 100,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    marginBottom: 8,
+                  }}
+                >
+                  <Text size="sm" fw={600} mb={4}>
+                    Ответ AI:
+                  </Text>
+                  <Text size="sm" mb="sm" style={{ whiteSpace: "pre-line" }}>
+                    {priceSuggestion}
+                  </Text>
+                  <Group>
+                    <Button
+                      size="xs"
+                      onClick={() => {
+                        const cleaned = priceSuggestion.replace(/[^\d]/g, "");
+                        if (cleaned) setPrice(cleaned);
+                        setPriceSuggestion(null);
+                      }}
+                    >
+                      Применить
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      color="gray"
+                      onClick={() => setPriceSuggestion(null)}
+                    >
+                      Закрыть
+                    </Button>
+                  </Group>
+                </Box>
+              )}
+              {priceError && (
+                <Box
+                  p="md"
+                  style={{
+                    border: "1px solid #ff4d4f",
+                    borderRadius: 8,
+                    backgroundColor: "#fff2f0",
+                    maxWidth: 360,
+                    position: "absolute",
+                    bottom: "100%",
+                    left: 0,
+                    zIndex: 100,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    marginBottom: 8,
+                  }}
+                >
+                  <Text size="sm" c="red" fw={600}>
+                    Произошла ошибка при запросе к AI
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    Попробуйте повторить запрос или закройте уведомление
+                  </Text>
+                  <Button
+                    size="xs"
+                    variant="subtle"
+                    color="gray"
+                    mt="xs"
+                    onClick={() => setPriceError(false)}
+                  >
+                    Закрыть
+                  </Button>
+                </Box>
+              )}
+              <Button
+                variant="none"
+                fw={400}
+                leftSection={"💡"}
+                loading={isGettingPrice}
+                onClick={handleGetPrice}
+                style={{ backgroundColor: "#F9F1E6", color: "#FFA940" }}
+              >
+                {priceSuggestion ? "Повторить запрос" : "Узнать рыночную цену"}
+              </Button>
+            </Box>
           </Group>
           <Box
-            style={{
-              borderBottom: "1px solid #F0F0F0",
-              width: 700,
-              margin: "0 auto",
-              marginTop: "-10px",
-            }}
-          ></Box>
+            style={{ borderBottom: "1px solid #F0F0F0", marginBottom: 18 }}
+          />
 
-          <Text fw={500} mb="sm" mt="md">
+          <Text fw={500} mb="sm">
             Характеристики
           </Text>
 
@@ -218,166 +324,184 @@ export default function AdEditPage() {
               <Text size="sm" mb={4}>
                 Тип
               </Text>
-              <Select
-                value={params.type ?? null}
-                onChange={(v) => updateParam("type", v ?? "")}
-                data={[
-                  { value: "phone", label: "Телефон" },
-                  { value: "laptop", label: "Ноутбук" },
-                  { value: "misc", label: "Другое" },
-                ]}
-                mb="sm"
-                styles={{
-                  input: { borderColor: !params.type ? "#FAAD14" : undefined },
-                }}
-                rightSection={<IconChevronDown size={16} />}
-              />
+              <Box maw={456}>
+                <Select
+                  value={params.type ?? null}
+                  onChange={(v) => updateParam("type", v ?? "")}
+                  data={[
+                    { value: "phone", label: "Телефон" },
+                    { value: "laptop", label: "Ноутбук" },
+                    { value: "misc", label: "Другое" },
+                  ]}
+                  mb="sm"
+                  styles={{
+                    input: {
+                      borderColor: !params.type ? "#FAAD14" : undefined,
+                    },
+                  }}
+                  rightSection={<IconChevronDown size={16} />}
+                />
+              </Box>
               <Text size="sm" mb={4}>
                 Бренд
               </Text>
-              <ClearableInput
-                value={params.brand ?? ""}
-                onChange={(v) => updateParam("brand", v)}
-                mb="sm"
-                borderColor={!params.brand ? "#FAAD14" : undefined}
-              />
+              <Box maw={456}>
+                <ClearableInput
+                  value={params.brand ?? ""}
+                  onChange={(v) => updateParam("brand", v)}
+                  mb="sm"
+                  borderColor={!params.brand ? "#FAAD14" : undefined}
+                />
+              </Box>
               <Text size="sm" mb={4}>
                 Модель
               </Text>
-              <ClearableInput
-                value={params.model ?? ""}
-                onChange={(v) => updateParam("model", v)}
-                mb="sm"
-                borderColor={!params.model ? "#FAAD14" : undefined}
-              />
-
+              <Box maw={456}>
+                <ClearableInput
+                  value={params.model ?? ""}
+                  onChange={(v) => updateParam("model", v)}
+                  mb="sm"
+                  borderColor={!params.model ? "#FAAD14" : undefined}
+                />
+              </Box>
               <Text size="sm" mb={4}>
                 Цвет
               </Text>
-              <ClearableInput
-                value={params.color ?? ""}
-                onChange={(v) => updateParam("color", v)}
-                mb="sm"
-                borderColor={!params.color ? "#FAAD14" : undefined}
-              />
+              <Box maw={456}>
+                <ClearableInput
+                  value={params.color ?? ""}
+                  onChange={(v) => updateParam("color", v)}
+                  mb="sm"
+                  borderColor={!params.color ? "#FAAD14" : undefined}
+                />
+              </Box>
               <Text size="sm" mb={4}>
                 Состояние
               </Text>
-
-              <Select
-                value={params.condition ?? null}
-                onChange={(v) => updateParam("condition", v ?? "")}
-                data={[
-                  { value: "new", label: "Новое" },
-                  { value: "used", label: "Б/у" },
-                ]}
-                mb="sm"
-                styles={{
-                  input: {
-                    borderColor: !params.condition ? "#FAAD14" : undefined,
-                  },
-                }}
-                rightSection={<IconChevronDown size={16} />}
-              />
+              <Box maw={456}>
+                <Select
+                  value={params.condition ?? null}
+                  onChange={(v) => updateParam("condition", v ?? "")}
+                  data={[
+                    { value: "new", label: "Новое" },
+                    { value: "used", label: "Б/у" },
+                  ]}
+                  mb="sm"
+                  styles={{
+                    input: {
+                      borderColor: !params.condition ? "#FAAD14" : undefined,
+                    },
+                  }}
+                  rightSection={<IconChevronDown size={16} />}
+                />
+              </Box>
             </>
           )}
 
-          <Box
-            style={{
-              borderBottom: "1px solid #F0F0F0",
-              width: 700,
-              margin: "0 auto",
-              marginTop: "18px",
-            }}
-          ></Box>
           {category === "auto" && (
             <>
-              <Text size="sm" mb={4} mt={18}>
+              <Text size="sm" mb={4}>
                 Бренд
               </Text>
-              <ClearableInput
-                value={params.brand ?? ""}
-                onChange={(v) => updateParam("brand", v)}
-                mb="sm"
-                borderColor={!params.brand ? "#FAAD14" : undefined}
-              />
-
+              <Box maw={456}>
+                <ClearableInput
+                  value={params.brand ?? ""}
+                  onChange={(v) => updateParam("brand", v)}
+                  mb="sm"
+                  borderColor={!params.brand ? "#FAAD14" : undefined}
+                />
+              </Box>
               <Text size="sm" mb={4}>
                 Модель
               </Text>
-              <TextInput
-                value={params.model ?? ""}
-                onChange={(e) => updateParam("model", e.currentTarget.value)}
-                mb="sm"
-                styles={{
-                  input: { borderColor: !params.model ? "#FAAD14" : undefined },
-                }}
-              />
+              <Box maw={456}>
+                <TextInput
+                  value={params.model ?? ""}
+                  onChange={(e) => updateParam("model", e.currentTarget.value)}
+                  mb="sm"
+                  styles={{
+                    input: {
+                      borderColor: !params.model ? "#FAAD14" : undefined,
+                    },
+                  }}
+                />
+              </Box>
               <Text size="sm" mb={4}>
                 Год выпуска
               </Text>
-              <TextInput
-                value={params.yearOfManufacture ?? ""}
-                onChange={(e) =>
-                  updateParam("yearOfManufacture", e.currentTarget.value)
-                }
-                mb="sm"
-                type="number"
-                styles={{
-                  input: {
-                    borderColor: !params.yearOfManufacture
-                      ? "#FAAD14"
-                      : undefined,
-                  },
-                }}
-              />
+              <Box maw={456}>
+                <TextInput
+                  value={params.yearOfManufacture ?? ""}
+                  onChange={(e) =>
+                    updateParam("yearOfManufacture", e.currentTarget.value)
+                  }
+                  mb="sm"
+                  type="number"
+                  styles={{
+                    input: {
+                      borderColor: !params.yearOfManufacture
+                        ? "#FAAD14"
+                        : undefined,
+                    },
+                  }}
+                />
+              </Box>
               <Text size="sm" mb={4}>
                 Коробка передач
               </Text>
-              <Select
-                value={params.transmission ?? null}
-                onChange={(v) => updateParam("transmission", v ?? "")}
-                data={[
-                  { value: "automatic", label: "Автомат" },
-                  { value: "manual", label: "Механика" },
-                ]}
-                mb="sm"
-                styles={{
-                  input: {
-                    borderColor: !params.transmission ? "#FAAD14" : undefined,
-                  },
-                }}
-              />
+              <Box maw={456}>
+                <Select
+                  value={params.transmission ?? null}
+                  onChange={(v) => updateParam("transmission", v ?? "")}
+                  data={[
+                    { value: "automatic", label: "Автомат" },
+                    { value: "manual", label: "Механика" },
+                  ]}
+                  mb="sm"
+                  styles={{
+                    input: {
+                      borderColor: !params.transmission ? "#FAAD14" : undefined,
+                    },
+                  }}
+                  rightSection={<IconChevronDown size={16} />}
+                />
+              </Box>
               <Text size="sm" mb={4}>
                 Пробег
               </Text>
-              <TextInput
-                value={params.mileage ?? ""}
-                onChange={(e) => updateParam("mileage", e.currentTarget.value)}
-                mb="sm"
-                type="number"
-                styles={{
-                  input: {
-                    borderColor: !params.mileage ? "#FAAD14" : undefined,
-                  },
-                }}
-              />
+              <Box maw={456}>
+                <TextInput
+                  value={params.mileage ?? ""}
+                  onChange={(e) =>
+                    updateParam("mileage", e.currentTarget.value)
+                  }
+                  mb="sm"
+                  type="number"
+                  styles={{
+                    input: {
+                      borderColor: !params.mileage ? "#FAAD14" : undefined,
+                    },
+                  }}
+                />
+              </Box>
               <Text size="sm" mb={4}>
                 Мощность двигателя
               </Text>
-              <TextInput
-                value={params.enginePower ?? ""}
-                onChange={(e) =>
-                  updateParam("enginePower", e.currentTarget.value)
-                }
-                mb="sm"
-                type="number"
-                styles={{
-                  input: {
-                    borderColor: !params.enginePower ? "#FAAD14" : undefined,
-                  },
-                }}
-              />
+              <Box maw={456}>
+                <TextInput
+                  value={params.enginePower ?? ""}
+                  onChange={(e) =>
+                    updateParam("enginePower", e.currentTarget.value)
+                  }
+                  mb="sm"
+                  type="number"
+                  styles={{
+                    input: {
+                      borderColor: !params.enginePower ? "#FAAD14" : undefined,
+                    },
+                  }}
+                />
+              </Box>
             </>
           )}
 
@@ -386,60 +510,85 @@ export default function AdEditPage() {
               <Text size="sm" mb={4}>
                 Тип
               </Text>
-              <Select
-                value={params.type ?? null}
-                onChange={(v) => updateParam("type", v ?? "")}
-                data={[
-                  { value: "flat", label: "Квартира" },
-                  { value: "house", label: "Дом" },
-                  { value: "room", label: "Комната" },
-                ]}
-                mb="sm"
-                styles={{
-                  input: { borderColor: !params.type ? "#FAAD14" : undefined },
-                }}
-              />
+              <Box maw={456}>
+                <Select
+                  value={params.type ?? null}
+                  onChange={(v) => updateParam("type", v ?? "")}
+                  data={[
+                    { value: "flat", label: "Квартира" },
+                    { value: "house", label: "Дом" },
+                    { value: "room", label: "Комната" },
+                  ]}
+                  mb="sm"
+                  styles={{
+                    input: {
+                      borderColor: !params.type ? "#FAAD14" : undefined,
+                    },
+                  }}
+                  rightSection={<IconChevronDown size={16} />}
+                />
+              </Box>
               <Text size="sm" mb={4}>
                 Адрес
               </Text>
-              <TextInput
-                value={params.address ?? ""}
-                onChange={(e) => updateParam("address", e.currentTarget.value)}
-                mb="sm"
-                styles={{
-                  input: {
-                    borderColor: !params.address ? "#FAAD14" : undefined,
-                  },
-                }}
-              />
+              <Box maw={456}>
+                <TextInput
+                  value={params.address ?? ""}
+                  onChange={(e) =>
+                    updateParam("address", e.currentTarget.value)
+                  }
+                  mb="sm"
+                  styles={{
+                    input: {
+                      borderColor: !params.address ? "#FAAD14" : undefined,
+                    },
+                  }}
+                />
+              </Box>
               <Text size="sm" mb={4}>
                 Площадь
               </Text>
-              <TextInput
-                value={params.area ?? ""}
-                onChange={(e) => updateParam("area", e.currentTarget.value)}
-                mb="sm"
-                type="number"
-                styles={{
-                  input: { borderColor: !params.area ? "#FAAD14" : undefined },
-                }}
-              />
+              <Box maw={456}>
+                <TextInput
+                  value={params.area ?? ""}
+                  onChange={(e) => updateParam("area", e.currentTarget.value)}
+                  mb="sm"
+                  type="number"
+                  styles={{
+                    input: {
+                      borderColor: !params.area ? "#FAAD14" : undefined,
+                    },
+                  }}
+                />
+              </Box>
               <Text size="sm" mb={4}>
                 Этаж
               </Text>
-              <TextInput
-                value={params.floor ?? ""}
-                onChange={(e) => updateParam("floor", e.currentTarget.value)}
-                mb="sm"
-                type="number"
-                styles={{
-                  input: { borderColor: !params.floor ? "#FAAD14" : undefined },
-                }}
-              />
+              <Box maw={456}>
+                <TextInput
+                  value={params.floor ?? ""}
+                  onChange={(e) => updateParam("floor", e.currentTarget.value)}
+                  mb="sm"
+                  type="number"
+                  styles={{
+                    input: {
+                      borderColor: !params.floor ? "#FAAD14" : undefined,
+                    },
+                  }}
+                />
+              </Box>
             </>
           )}
 
-          <Text fw={500} mb={4} mt="md">
+          <Box
+            style={{
+              borderBottom: "1px solid #F0F0F0",
+              marginBottom: 18,
+              marginTop: 18,
+            }}
+          />
+
+          <Text fw={500} mb={4}>
             Описание
           </Text>
           <Textarea
@@ -449,27 +598,92 @@ export default function AdEditPage() {
             minRows={4}
             mb={4}
           />
-          <Group justify="space-between" mb="md">
-            <Button
-              variant="none"
-              color="#FFA940"
-              fw={400}
-              leftSection={"💡"}
+
+          {descriptionSuggestion && (
+            <Box
+              mt="sm"
+              mb="sm"
+              p="md"
               style={{
-                backgroundColor: "#F9F1E6",
-                borderColor: "#FFA940",
-                color: "#FFA940",
+                border: "1px solid #e9ecef",
+                borderRadius: 8,
+                backgroundColor: "#fff",
               }}
             >
-              Улучшить описание
-            </Button>
+              <Text size="sm" fw={600} mb={4}>
+                Ответ AI:
+              </Text>
+              <Text size="sm" mb="sm" style={{ whiteSpace: "pre-line" }}>
+                {descriptionSuggestion}
+              </Text>
+              <Group>
+                а
+                <Button
+                  size="xs"
+                  onClick={() => {
+                    setDescription(descriptionSuggestion);
+                    setDescriptionSuggestion(null);
+                  }}
+                >
+                  Применить
+                </Button>
+                <Button
+                  size="xs"
+                  variant="subtle"
+                  color="gray"
+                  onClick={() => setDescriptionSuggestion(null)}
+                >
+                  Закрыть
+                </Button>
+              </Group>
+            </Box>
+          )}
+          {descriptionError && (
+            <Box
+              mt="sm"
+              mb="sm"
+              p="md"
+              style={{
+                border: "1px solid #ff4d4f",
+                borderRadius: 8,
+                backgroundColor: "#fff2f0",
+              }}
+            >
+              <Text size="sm" c="red" fw={600}>
+                Произошла ошибка при запросе к AI
+              </Text>
+              <Text size="sm" c="dimmed">
+                Попробуйте повторить запрос или закройте уведомление
+              </Text>
+              <Button
+                size="xs"
+                variant="subtle"
+                color="gray"
+                mt="xs"
+                onClick={() => setDescriptionError(false)}
+              >
+                Закрыть
+              </Button>
+            </Box>
+          )}
 
+          <Group justify="space-between" mb="md" mt="sm">
+            <Button
+              variant="none"
+              fw={400}
+              leftSection={"💡"}
+              loading={isImprovingDescription}
+              onClick={handleImproveDescription}
+              style={{ backgroundColor: "#F9F1E6", color: "#FFA940" }}
+            >
+              {description ? "Улучшить описание" : "Придумать описание"}
+            </Button>
             <Text size="xs" c="dimmed">
               {description.length} / 1000
             </Text>
           </Group>
 
-          <Group>
+          <Group mt="md">
             <Button
               onClick={() => mutate()}
               loading={isPending}
@@ -481,9 +695,7 @@ export default function AdEditPage() {
               variant="subtle"
               color="#5A5A5A"
               onClick={() => navigate(`/ads/${id}`)}
-              style={{
-                backgroundColor: "#D9D9D9",
-              }}
+              style={{ backgroundColor: "#D9D9D9" }}
             >
               Отменить
             </Button>
