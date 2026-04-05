@@ -80,7 +80,7 @@ export default function AdEditPage() {
     if (!id || !initialized) return;
     localStorage.setItem(
       `draft_${id}`,
-      JSON.stringify({ title, price, description, params }),
+      JSON.stringify({ title, price, description, params })
     );
   }, [title, price, description, params, id, initialized]);
 
@@ -252,7 +252,7 @@ export default function AdEditPage() {
                           priceSuggestion.match(/\d[\d\s]*\d|\d+/g);
                         if (matches) {
                           const numbers = matches.map((m) =>
-                            Number(m.replace(/\s/g, "")),
+                            Number(m.replace(/\s/g, ""))
                           );
                           const biggest = Math.max(...numbers);
                           setPrice(String(biggest));

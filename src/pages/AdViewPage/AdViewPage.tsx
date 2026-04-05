@@ -97,7 +97,6 @@ export default function AdViewPage() {
 
   return (
     <Box style={{ minHeight: "100vh" }}>
-      {/* Шапка */}
       <Box bg="#F7F5F8" py="xl">
         <Container size="xl">
           <Group justify="space-between" align="flex-start">
@@ -137,10 +136,8 @@ export default function AdViewPage() {
         }}
       ></Box>
 
-      {/* Контент */}
       <Container size="xl" py="xl">
         <Grid>
-          {/* Левая колонка — фото */}
           <Grid.Col span={4}>
             <Image
               src={null}
@@ -198,7 +195,6 @@ export default function AdViewPage() {
               </Box>
             )}
 
-            {/* Характеристики */}
             <Title order={4} mb="sm" mt={36}>
               Характеристики
             </Title>
@@ -218,12 +214,9 @@ export default function AdViewPage() {
                   </Grid.Col>
                 </Grid>
               ))}
-
-            {/* Описание */}
           </Grid.Col>
         </Grid>
 
-        {/* Кнопка назад */}
         <Button
           variant="subtle"
           color="gray"

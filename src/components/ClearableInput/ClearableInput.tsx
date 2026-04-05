@@ -4,7 +4,6 @@ import { IconX } from "@tabler/icons-react";
 type Props = {
   value: string;
   onChange: (value: string) => void;
-  label?: string;
   mb?: string | number;
   type?: string;
   borderColor?: string;
