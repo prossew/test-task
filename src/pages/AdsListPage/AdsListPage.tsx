@@ -27,6 +27,7 @@ import { useState } from "react";
 import { getItems } from "../../api/itemsApi";
 import AdCard from "../../components/AdCard/AdCard";
 import { useDebounce } from "../../hooks/useDebounce";
+import { useFiltersStore } from "../../store/useFiltersStore";
 
 const CATEGORIES = [
   { value: "auto", label: "Авто" },
@@ -39,11 +40,16 @@ const LIMIT = 10;
 export default function AdsListPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [needsRevision, setNeedsRevision] = useState(false);
+  const {
+    selectedCategories,
+    needsRevision,
+    toggleCategory,
+    setNeedsRevision,
+    reset,
+  } = useFiltersStore();
   const [categoriesOpen, setCategoriesOpen] = useState(true);
   const [sortColumn, setSortColumn] = useState<"createdAt" | "title">(
-    "createdAt",
+    "createdAt"
   );
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -77,15 +83,12 @@ export default function AdsListPage() {
   const totalPages = data ? Math.ceil(data.total / LIMIT) : 1;
 
   const handleCategoryToggle = (value: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(value) ? prev.filter((c) => c !== value) : [...prev, value],
-    );
+    toggleCategory(value);
     setPage(1);
   };
 
   const handleReset = () => {
-    setSelectedCategories([]);
-    setNeedsRevision(false);
+    reset();
     setPage(1);
   };
 

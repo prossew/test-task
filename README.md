@@ -44,7 +44,7 @@ VITE_GROQ_API_KEY=твой_api_ключ
 ### 4. Запустить фронтенд
 
 ```bash
-cd avito-test
+cd test-task
 npm install
 npm run dev
 ```

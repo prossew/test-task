@@ -31,7 +31,11 @@ export default function AdEditPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: item, isLoading } = useQuery({
+  const {
+    data: item,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["item", id],
     queryFn: () => getItemById(id!),
     enabled: !!id,
@@ -164,6 +168,15 @@ export default function AdEditPage() {
       </Container>
     );
 
+  if (isError || !item)
+    return (
+      <Container size="xl" py="xl">
+        <Text c="red" ta="center">
+          Ошибка загрузки объявления
+        </Text>
+      </Container>
+    );
+    
   return (
     <Box style={{ minHeight: "100vh" }}>
       <Container size="xl" py="xl">
