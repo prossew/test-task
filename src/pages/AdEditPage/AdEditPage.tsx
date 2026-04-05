@@ -248,8 +248,15 @@ export default function AdEditPage() {
                     <Button
                       size="xs"
                       onClick={() => {
-                        const cleaned = priceSuggestion.replace(/[^\d]/g, "");
-                        if (cleaned) setPrice(cleaned);
+                        const matches =
+                          priceSuggestion.match(/\d[\d\s]*\d|\d+/g);
+                        if (matches) {
+                          const numbers = matches.map((m) =>
+                            Number(m.replace(/\s/g, "")),
+                          );
+                          const biggest = Math.max(...numbers);
+                          setPrice(String(biggest));
+                        }
                         setPriceSuggestion(null);
                       }}
                     >
@@ -266,6 +273,7 @@ export default function AdEditPage() {
                   </Group>
                 </Box>
               )}
+
               {priceError && (
                 <Box
                   p="md"
@@ -617,7 +625,6 @@ export default function AdEditPage() {
                 {descriptionSuggestion}
               </Text>
               <Group>
-                а
                 <Button
                   size="xs"
                   onClick={() => {

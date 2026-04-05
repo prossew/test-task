@@ -1,74 +1,75 @@
-# React + TypeScript + Vite
+# Web App AI Assistant
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Веб-приложение — личный кабинет продавца с AI-ассистентом.
 
-Currently, two official plugins are available:
+## Стек
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19 + TypeScript
+- Vite
+- Mantine UI
+- TanStack Query + Axios
+- Zustand
+- React Router DOM
+- Groq API (LLM)
 
-## React Compiler
+## Запуск проекта
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 1. Клонировать репозиторий
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/prossew/test-task.git
+cd test-task
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Запустить бэкенд
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd server
+npm install --legacy-peer-deps
+port=8080 npm start
 ```
-# test-task
+
+Сервер запустится на `http://localhost:8080`
+
+### 3. Настроить LLM
+
+Создай файл `.env` в корне проекта `test-task/`:
+
+```env
+VITE_GROQ_API_KEY=твой_api_ключ
+```
+
+Получить API ключ можно бесплатно на [console.groq.com](https://console.groq.com)
+
+### 4. Запустить фронтенд
+
+```bash
+cd avito-test
+npm install
+npm run dev
+```
+
+Открой `http://localhost:5173`
+
+## Страницы
+
+- `/ads` — список объявлений с поиском, фильтрами, сортировкой и пагинацией
+- `/ads/:id` — просмотр объявления с характеристиками и блоком доработок
+- `/ads/:id/edit` — редактирование с AI-функциями
+
+## AI-функции
+
+На странице редактирования доступны:
+
+- **Придумать/Улучшить описание** — генерирует описание на основе данных объявления
+- **Узнать рыночную цену** — анализирует товар и предлагает актуальную цену
+
+Результат отображается в тултипе с кнопками «Применить» и «Закрыть».
+
+## Принятые решения
+
+- **Groq API** вместо Ollama — бесплатный внешний API, не требует локальной установки модели, быстрее в работе
+- **Черновик в localStorage** — форма редактирования автоматически сохраняет изменения и восстанавливает их при перезагрузке страницы
+- **needsRevision на фронте** — бэкенд возвращает поле `needsRevision`, фронт отображает его на карточках и странице просмотра
+- **Переключатель грид/список** — реализован как бонусный функционал
+- **ClearableInput** — кастомный компонент с кнопкой очистки поля
