@@ -89,6 +89,7 @@ export default function AdsListPage() {
 
   const handleReset = () => {
     reset();
+    setSearch("");
     setPage(1);
   };
 
